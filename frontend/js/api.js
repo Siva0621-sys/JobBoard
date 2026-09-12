@@ -1,5 +1,5 @@
-﻿const API_CONFIG = {
-    BASE_URL: "http://127.0.0.1:8000",
+const API_CONFIG = {
+    BASE_URL: "https://jobboard-uqze.onrender.com",
     API_PREFIX: "/api/v1"
 };
 
