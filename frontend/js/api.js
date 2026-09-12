@@ -1,121 +1,238 @@
-const API_CONFIG = {
+﻿const API_CONFIG = {
     BASE_URL: "http://127.0.0.1:8000",
     API_PREFIX: "/api/v1"
 };
 
-const JobBoardAPI = {
-    async request(path, options = {}) {
-        const response = await fetch(
-            `${API_CONFIG.BASE_URL}${path}`,
-            {
-                ...options,
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(options.headers || {})
-                }
-            }
-        );
 
-        if (!response.ok) {
-            throw new Error(
-                `API request failed: ${response.status} ${response.statusText}`
-            );
+function buildQuery(params = {}) {
+
+    const query = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+
+        if (
+            value !== undefined &&
+            value !== null &&
+            value !== ""
+        ) {
+            query.set(key, value);
         }
 
-        return response.json();
-    },
+    });
 
-    // Health
-    async health() {
-        return this.request("/health");
-    },
+    const result = query.toString();
 
-    // Jobs
-    async getJobs(params = {}) {
-        const query = new URLSearchParams();
+    return result ? `?${result}` : "";
+}
 
-        Object.entries(params).forEach(([key, value]) => {
-            if (
-                value !== undefined &&
-                value !== null &&
-                value !== ""
-            ) {
-                query.set(key, value);
+
+async function request(path, options = {}) {
+
+    const url =
+        `${API_CONFIG.BASE_URL}${path}`;
+
+    console.log("JobBoard API:", url);
+
+    const response =
+        await fetch(url, {
+            ...options,
+
+            headers: {
+                Accept: "application/json",
+                ...(options.headers || {})
             }
         });
 
-        const suffix = query.toString()
-            ? `?${query.toString()}`
-            : "";
 
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/jobs${suffix}`
-        );
+    if (!response.ok) {
+
+        let message =
+            `API request failed: ${response.status} ${response.statusText}`;
+
+        try {
+
+            const data =
+                await response.json();
+
+            if (data?.detail) {
+                message = data.detail;
+            }
+
+        } catch (_) {}
+
+        throw new Error(message);
+    }
+
+
+    return response.json();
+}
+
+
+function normalizeList(response) {
+
+    if (Array.isArray(response)) {
+        return response;
+    }
+
+    if (Array.isArray(response?.data)) {
+        return response.data;
+    }
+
+    if (Array.isArray(response?.jobs)) {
+        return response.jobs;
+    }
+
+    if (Array.isArray(response?.results)) {
+        return response.results;
+    }
+
+    return [];
+}
+
+
+const JobBoardAPI = {
+
+    config: API_CONFIG,
+
+    request,
+
+    normalizeList,
+
+
+    async health() {
+
+        return request("/health");
+
     },
+
+
+    async getJobs(params = {}) {
+
+        return request(
+            "/api/v1/jobs" +
+            buildQuery(params)
+        );
+
+    },
+
 
     async getJob(jobId) {
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/jobs/${encodeURIComponent(jobId)}`
+
+        if (!jobId) {
+            throw new Error("Job ID is required.");
+        }
+
+        return request(
+            "/api/v1/jobs/" +
+            encodeURIComponent(jobId)
         );
+
     },
 
-    // Companies
+
     async getCompanies() {
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/companies`
+
+        return request(
+            "/api/v1/companies"
         );
+
     },
+
 
     async getCompany(companyId) {
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/companies/${encodeURIComponent(companyId)}`
+
+        if (!companyId) {
+            throw new Error("Company ID is required.");
+        }
+
+        return request(
+            "/api/v1/companies/" +
+            encodeURIComponent(companyId)
         );
+
     },
 
-    // Categories
+
     async getCategories() {
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/categories`
+
+        return request(
+            "/api/v1/categories"
         );
+
     },
 
-    // Search
+
     async searchJobs(params = {}) {
-        const query = new URLSearchParams();
 
-        Object.entries(params).forEach(([key, value]) => {
-            if (
-                value !== undefined &&
-                value !== null &&
-                value !== ""
-            ) {
-                query.set(key, value);
-            }
-        });
-
-        const suffix = query.toString()
-            ? `?${query.toString()}`
-            : "";
-
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/search${suffix}`
+        return request(
+            "/api/v1/search" +
+            buildQuery(params)
         );
+
     },
 
-    // Trending
+
     async getTrending() {
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/trending`
+
+        return request(
+            "/api/v1/trending"
         );
+
     },
 
-    // Statistics
+
     async getStats() {
-        return this.request(
-            `${API_CONFIG.API_PREFIX}/stats`
+
+        return request(
+            "/api/v1/stats"
         );
+
     }
+
 };
 
+
+/*
+=========================================================
+Compatibility API
+=========================================================
+*/
+
+JobBoardAPI.jobs = {
+
+    list(params = {}) {
+        return JobBoardAPI.getJobs(params);
+    },
+
+    get(jobId) {
+        return JobBoardAPI.getJob(jobId);
+    }
+
+};
+
+
+JobBoardAPI.companies = {
+
+    list(params = {}) {
+        return JobBoardAPI.getCompanies(params);
+    },
+
+    get(companyId) {
+        return JobBoardAPI.getCompany(companyId);
+    }
+
+};
+
+
+JobBoardAPI.categories = {
+
+    list() {
+        return JobBoardAPI.getCategories();
+    }
+
+};
+
+
 window.JobBoardAPI = JobBoardAPI;
-window.API_CONFIG = API_CONFIG;
+
+console.log("JobBoard API client loaded successfully.");

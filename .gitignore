@@ -38,3 +38,12 @@ node_modules/
 # Build/cache
 dist/
 build/
+
+# Local backups
+frontend/_repair_backup/
+
+# Python cache
+__pycache__/
+*.py[cod]
+backend/**/__pycache__/
+

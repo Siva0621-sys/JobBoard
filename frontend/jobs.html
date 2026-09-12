@@ -1,38 +1,210 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Jobs | JobBoard</title>
+
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
+
 </head>
+
 <body>
+
     <header id="site-header"></header>
 
+
     <main class="page-container">
+
         <section class="page-header">
-            <div>
-                <h1>Latest Jobs</h1>
-                <p>Discover live opportunities from multiple job sources.</p>
+
+            <div class="container">
+
+                <span class="eyebrow">
+                    OPPORTUNITIES
+                </span>
+
+                <h1>
+                    Find jobs
+                </h1>
+
+                <p>
+                    Search live opportunities from multiple job sources.
+                </p>
+
             </div>
+
         </section>
 
-        <section class="jobs-section">
-            <div class="section-header">
-                <h2>Available Jobs</h2>
-                <span id="jobs-count"></span>
+
+        <section class="section">
+
+            <div class="container">
+
+                <form
+                    id="jobs-filter-form"
+                    class="filter-bar"
+                >
+
+                    <div class="search-field">
+
+                        <label for="jobs-keyword">
+                            Keyword
+                        </label>
+
+                        <input
+                            id="jobs-keyword"
+                            type="text"
+                            placeholder="Job title or skill"
+                        >
+
+                    </div>
+
+
+                    <div class="search-field">
+
+                        <label for="jobs-location">
+                            Location
+                        </label>
+
+                        <input
+                            id="jobs-location"
+                            type="text"
+                            placeholder="Location"
+                        >
+
+                    </div>
+
+
+                    <div class="search-field">
+
+                        <label for="jobs-category">
+                            Category
+                        </label>
+
+                        <input
+                            id="jobs-category"
+                            type="text"
+                            placeholder="Category ID"
+                        >
+
+                    </div>
+
+
+                    <div class="search-field">
+
+                        <label for="jobs-type">
+                            Job type
+                        </label>
+
+                        <select id="jobs-type">
+
+                            <option value="">
+                                All types
+                            </option>
+
+                            <option value="full-time">
+                                Full time
+                            </option>
+
+                            <option value="part-time">
+                                Part time
+                            </option>
+
+                            <option value="contract">
+                                Contract
+                            </option>
+
+                            <option value="freelance">
+                                Freelance
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="search-field">
+
+                        <label for="jobs-mode">
+                            Work mode
+                        </label>
+
+                        <select id="jobs-mode">
+
+                            <option value="">
+                                All modes
+                            </option>
+
+                            <option value="remote">
+                                Remote
+                            </option>
+
+                            <option value="hybrid">
+                                Hybrid
+                            </option>
+
+                            <option value="onsite">
+                                On-site
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="button button-primary"
+                    >
+                        Apply filters
+                    </button>
+
+                </form>
+
+
+                <div class="section-header">
+
+                    <h2>
+                        Available jobs
+                    </h2>
+
+                    <span id="jobs-count"></span>
+
+                </div>
+
+
+                <div
+                    id="jobsContainer"
+                    class="jobs-grid"
+                ></div>
+
+
+                <div
+                    id="jobs-pagination"
+                    class="pagination"
+                ></div>
+
             </div>
-            <div id="jobs-status"></div>
-            <div id="jobs-container" class="job-grid"></div>
+
         </section>
+
     </main>
+
 
     <footer id="site-footer"></footer>
 
-    <script src="js/main.js"></script>
+
     <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
     <script src="js/jobs.js"></script>
+
 </body>
 </html>

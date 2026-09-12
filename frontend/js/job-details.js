@@ -1,1179 +1,454 @@
-﻿/* =========================================================
-   JOBBOARD — JOB DETAILS PAGE
-   ========================================================= */
+﻿/*
+=========================================================
+JOBBOARD JOB DETAILS PAGE
+=========================================================
+*/
 
-"use strict";
+(function () {
 
-
-/* =========================================================
-   STATE
-   ========================================================= */
-
-const jobDetailsState = {
-    jobId: "",
-    job: null,
-    loading: false
-};
+    "use strict";
 
 
-/* =========================================================
-   DOM HELPER
-   ========================================================= */
+    function getJobId() {
 
-function jobDetailsElement(selector) {
-    return document.querySelector(selector);
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeJobDetailsHtml(value) {
-
-    const element =
-        document.createElement("div");
-
-    element.textContent =
-        String(value ?? "");
-
-    return element.innerHTML;
-}
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
 
 
-/* =========================================================
-   STRIP HTML
-   ========================================================= */
-
-function stripJobDetailsHtml(value) {
-
-    const element =
-        document.createElement("div");
-
-    element.innerHTML =
-        String(value ?? "");
-
-    return (
-        element.textContent ||
-        element.innerText ||
-        ""
-    ).replace(/\s+/g, " ").trim();
-}
-
-
-/* =========================================================
-   READ JOB ID
-   ========================================================= */
-
-function readJobId() {
-
-    const params =
-        new URLSearchParams(
-            window.location.search
+        return (
+            params.get("id") ||
+            params.get("job_id") ||
+            params.get("jobId") ||
+            ""
         );
 
-    return (
-        params.get("id") ||
-        params.get("job_id") ||
-        params.get("jobId") ||
-        ""
-    );
-}
-
-
-/* =========================================================
-   FORMAT DATE
-   ========================================================= */
-
-function formatJobDetailsDate(value) {
-
-    if (!value) {
-        return "Recently posted";
     }
 
-    const date =
-        new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
-        return "Recently posted";
-    }
+    function formatDate(value) {
 
-    return date.toLocaleDateString(
-        "en-IN",
-        {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
+        if (!value) {
+            return "Not specified";
         }
-    );
-}
 
 
-/* =========================================================
-   FORMAT SALARY
-   ========================================================= */
+        const date =
+            new Date(value);
 
-function formatJobDetailsSalary(job) {
 
-    const salary =
-        job.salary ||
-        job.salary_text ||
-        job.salary_range ||
-        "";
+        if (Number.isNaN(date.getTime())) {
+            return String(value);
+        }
 
-    if (salary) {
-        return salary;
-    }
 
-    const minimum =
-        job.salary_min ??
-        job.min_salary;
-
-    const maximum =
-        job.salary_max ??
-        job.max_salary;
-
-    const currency =
-        job.salary_currency ||
-        job.currency ||
-        "INR";
-
-    if (
-        minimum === null ||
-        minimum === undefined
-    ) {
-        return "";
-    }
-
-    const formatter =
-        new Intl.NumberFormat(
-            "en-IN",
+        return date.toLocaleDateString(
+            undefined,
             {
-                style: "currency",
-                currency,
-                maximumFractionDigits: 0
+                year: "numeric",
+                month: "short",
+                day: "numeric"
             }
         );
 
-    if (
-        maximum !== null &&
-        maximum !== undefined
-    ) {
-        return `${formatter.format(minimum)} - ${formatter.format(maximum)}`;
     }
 
-    return formatter.format(minimum);
-}
+
+    function renderJob(job, container) {
+
+        const escape =
+            window.JobBoardUI.escapeHTML;
 
 
-/* =========================================================
-   FORMAT JOB TYPE
-   ========================================================= */
-
-function formatJobDetailsType(value) {
-
-    if (!value) {
-        return "";
-    }
-
-    return String(value)
-        .replace(/[_-]+/g, " ")
-        .replace(/\b\w/g, (letter) =>
-            letter.toUpperCase()
-        );
-}
+        const title =
+            job?.title ||
+            "Job opportunity";
 
 
-/* =========================================================
-   NORMALIZE JOB
-   ========================================================= */
+        const company =
+            job?.company_name ||
+            job?.company ||
+            "Company not specified";
 
-function normalizeJobDetails(job) {
 
-    if (!job) {
-        return null;
-    }
+        const location =
+            job?.location ||
+            [job?.city, job?.state, job?.country]
+                .filter(Boolean)
+                .join(", ") ||
+            "Location not specified";
 
-    return {
-        ...job,
 
-        id:
-            job.id ??
-            job.job_id ??
-            job.external_id ??
-            "",
+        const workMode =
+            job?.work_mode ||
+            "Not specified";
 
-        title:
-            job.title ||
-            job.job_title ||
-            "Untitled job",
 
-        company:
-            job.company ||
-            job.company_name ||
-            job.employer_name ||
-            "Company not specified",
+        const jobType =
+            job?.job_type ||
+            "Not specified";
 
-        location:
-            job.location ||
-            job.city ||
-            job.job_location ||
-            "Location not specified",
 
-        description:
-            job.description ||
-            job.job_description ||
-            job.summary ||
-            "No job description available.",
+        const category =
+            job?.category_name ||
+            job?.category ||
+            "General";
 
-        posted_at:
-            job.posted_at ||
-            job.created_at ||
-            job.date_posted ||
-            job.published_at,
 
-        job_type:
-            job.job_type ||
-            job.employment_type ||
-            job.type,
+        const description =
+            job?.description ||
+            "No description available.";
 
-        work_mode:
-            job.work_mode ||
-            job.remote_type ||
-            job.remote,
 
-        category:
-            job.category ||
-            job.category_name,
+        const responsibilities =
+            job?.responsibilities ||
+            "";
 
-        company_logo:
-            job.company_logo ||
-            job.logo_url ||
-            job.company_logo_url,
 
-        apply_url:
-            job.apply_url ||
-            job.application_url ||
-            job.url ||
-            job.job_url,
+        const requirements =
+            job?.requirements ||
+            "";
 
-        source:
-            job.source ||
-            job.source_name,
 
-        skills:
-            Array.isArray(job.skills)
+        const skills =
+            Array.isArray(job?.skills)
                 ? job.skills
-                : [],
-
-        responsibilities:
-            Array.isArray(job.responsibilities)
-                ? job.responsibilities
-                : [],
-
-        requirements:
-            Array.isArray(job.requirements)
-                ? job.requirements
-                : []
-    };
-}
-
-
-/* =========================================================
-   LOADING STATE
-   ========================================================= */
-
-function showJobDetailsLoading() {
+                : typeof job?.skills === "string"
+                    ? job.skills
+                        .split(",")
+                        .map(item => item.trim())
+                        .filter(Boolean)
+                    : [];
 
-    const container =
-        jobDetailsElement(
-            "#jobDetails, #jobDetailsContainer, #jobDetailsContent"
-        );
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="loading-state">
 
-            <div
-                class="loading-spinner"
-                aria-hidden="true"
-            ></div>
-
-            <p>
-                Loading job details...
-            </p>
-
-        </div>
-    `;
-}
-
-
-/* =========================================================
-   ERROR STATE
-   ========================================================= */
-
-function showJobDetailsError(message) {
-
-    const container =
-        jobDetailsElement(
-            "#jobDetails, #jobDetailsContainer, #jobDetailsContent"
-        );
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="error-state">
-
-            <div
-                class="error-state-icon"
-                aria-hidden="true"
-            >
-                !
-            </div>
+        const applyUrl =
+            job?.apply_url ||
+            job?.application_url ||
+            job?.source_url ||
+            "#";
 
-            <h2>
-                Unable to load this job
-            </h2>
-
-            <p>
-                ${escapeJobDetailsHtml(
-                    message ||
-                    "The job details could not be loaded."
-                )}
-            </p>
-
-            <div class="error-state-actions">
-
-                <button
-                    type="button"
-                    class="button button-primary"
-                    id="retryJobDetails"
-                >
-                    Try again
-                </button>
-
-                <a
-                    href="jobs.html"
-                    class="button button-secondary"
-                >
-                    Browse jobs
-                </a>
-
-            </div>
-
-        </div>
-    `;
-
-    jobDetailsElement(
-        "#retryJobDetails"
-    )?.addEventListener(
-        "click",
-        loadJobDetails
-    );
-}
-
-
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
-
-function showJobDetailsEmpty() {
-
-    const container =
-        jobDetailsElement(
-            "#jobDetails, #jobDetailsContainer, #jobDetailsContent"
-        );
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="empty-state">
-
-            <div
-                class="empty-state-icon"
-                aria-hidden="true"
-            >
-                🔎
-            </div>
-
-            <h2>
-                Job not found
-            </h2>
-
-            <p>
-                This job may have been removed or is no longer available.
-            </p>
-
-            <a
-                href="jobs.html"
-                class="button button-primary"
-            >
-                Browse available jobs
-            </a>
-
-        </div>
-    `;
-}
-
-
-/* =========================================================
-   JOB LOGO
-   ========================================================= */
-
-function getJobDetailsLogo(job) {
-
-    const company =
-        job.company ||
-        "Company";
-
-    if (job.company_logo) {
-
-        return `
-            <img
-                src="${escapeJobDetailsHtml(
-                    job.company_logo
-                )}"
-                alt="${escapeJobDetailsHtml(
-                    company
-                )} logo"
-                loading="lazy"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-            >
-
-            <span
-                class="company-logo-fallback"
-                aria-hidden="true"
-                style="display:none;"
-            >
-                ${escapeJobDetailsHtml(
-                    company.charAt(0).toUpperCase()
-                )}
-            </span>
-        `;
-    }
-
-    return `
-        <span
-            class="company-logo-fallback"
-            aria-hidden="true"
-        >
-            ${escapeJobDetailsHtml(
-                company.charAt(0).toUpperCase()
-            )}
-        </span>
-    `;
-}
-
-
-/* =========================================================
-   DETAIL SECTION
-   ========================================================= */
-
-function renderDetailSection(title, content) {
-
-    if (!content) {
-        return "";
-    }
-
-    return `
-        <section class="job-detail-section">
-
-            <h2>
-                ${escapeJobDetailsHtml(title)}
-            </h2>
-
-            <div class="job-detail-section-content">
-                ${content}
-            </div>
-
-        </section>
-    `;
-}
-
-
-/* =========================================================
-   DESCRIPTION CONTENT
-   ========================================================= */
-
-function renderDescription(description) {
-
-    const cleanDescription =
-        String(description || "")
-            .trim();
-
-    if (!cleanDescription) {
-        return `
-            <p>
-                No description available.
-            </p>
-        `;
-    }
-
-    if (/<[a-z][\s\S]*>/i.test(cleanDescription)) {
-        return cleanDescription;
-    }
-
-    return cleanDescription
-        .split(/\n{2,}/)
-        .map((paragraph) => {
-
-            const text =
-                escapeJobDetailsHtml(
-                    paragraph
-                ).replace(/\n/g, "<br>");
-
-            return `<p>${text}</p>`;
-        })
-        .join("");
-}
-
-
-/* =========================================================
-   LIST CONTENT
-   ========================================================= */
-
-function renderDetailList(items) {
-
-    if (
-        !Array.isArray(items) ||
-        !items.length
-    ) {
-        return "";
-    }
-
-    return `
-        <ul class="job-detail-list">
-
-            ${items.map((item) => `
-                <li>
-                    ${escapeJobDetailsHtml(
-                        typeof item === "string"
-                            ? item
-                            : item.text ||
-                              item.description ||
-                              ""
-                    )}
-                </li>
-            `).join("")}
-
-        </ul>
-    `;
-}
-
-
-/* =========================================================
-   SKILLS CONTENT
-   ========================================================= */
-
-function renderJobSkills(skills) {
-
-    if (
-        !Array.isArray(skills) ||
-        !skills.length
-    ) {
-        return "";
-    }
-
-    return `
-        <div class="job-card-tags">
-
-            ${skills.map((skill) => `
-                <span class="tag">
-                    ${escapeJobDetailsHtml(
-                        typeof skill === "string"
-                            ? skill
-                            : skill.name ||
-                              skill.skill_name ||
-                              ""
-                    )}
-                </span>
-            `).join("")}
-
-        </div>
-    `;
-}
-
-
-/* =========================================================
-   RENDER JOB DETAILS
-   ========================================================= */
-
-function renderJobDetails(job) {
-
-    const container =
-        jobDetailsElement(
-            "#jobDetails, #jobDetailsContainer, #jobDetailsContent"
-        );
-
-    if (!container) {
-        return;
-    }
-
-    const salary =
-        formatJobDetailsSalary(job);
-
-    const jobType =
-        formatJobDetailsType(
-            job.job_type
-        );
-
-    const workMode =
-        formatJobDetailsType(
-            job.work_mode
-        );
-
-    const category =
-        job.category
-            ? formatJobDetailsType(
-                job.category
-            )
-            : "";
-
-    const postedDate =
-        formatJobDetailsDate(
-            job.posted_at
-        );
-
-    const description =
-        renderDescription(
-            job.description
-        );
-
-    const requirements =
-        renderDetailList(
-            job.requirements
-        );
-
-    const responsibilities =
-        renderDetailList(
-            job.responsibilities
-        );
-
-    const skills =
-        renderJobSkills(
-            job.skills
-        );
-
-    const applyUrl =
-        job.apply_url || "";
-
-    container.innerHTML = `
-
-        <article class="job-detail-page">
-
-            <header class="job-detail-header">
-
-                <div class="job-detail-company-logo">
-                    ${getJobDetailsLogo(job)}
-                </div>
-
-                <div class="job-detail-heading">
-
-                    <p class="job-detail-company">
-                        ${escapeJobDetailsHtml(
-                            job.company
-                        )}
-                    </p>
-
-                    <h1 class="job-detail-title">
-                        ${escapeJobDetailsHtml(
-                            job.title
-                        )}
-                    </h1>
-
-                    <div class="job-detail-meta">
-
-                        <span>
-                            📍
-                            ${escapeJobDetailsHtml(
-                                job.location
-                            )}
+
+        const salaryMin =
+            job?.salary_min;
+
+
+        const salaryMax =
+            job?.salary_max;
+
+
+        let salary = "Salary not specified";
+
+
+        if (
+            salaryMin !== null &&
+            salaryMin !== undefined &&
+            salaryMin !== ""
+        ) {
+
+            if (
+                salaryMax !== null &&
+                salaryMax !== undefined &&
+                salaryMax !== ""
+            ) {
+
+                salary =
+                    `${salaryMin} - ${salaryMax}`;
+
+            } else {
+
+                salary =
+                    `${salaryMin}+`;
+
+            }
+
+        }
+
+
+        const source =
+            job?.source ||
+            "Job source";
+
+
+        container.innerHTML = `
+
+            <article class="job-detail-card">
+
+                <div class="job-detail-header">
+
+                    <div>
+
+                        <span class="badge">
+                            ${escape(category)}
                         </span>
 
-                        <span>
-                            🗓️
-                            Posted ${escapeJobDetailsHtml(
-                                postedDate
-                            )}
-                        </span>
+                        <h1>
+                            ${escape(title)}
+                        </h1>
 
-                        ${
-                            job.source
-                                ? `
-                                    <span>
-                                        Source:
-                                        ${escapeJobDetailsHtml(
-                                            job.source
-                                        )}
-                                    </span>
-                                `
-                                : ""
-                        }
+                        <p class="job-detail-company">
+                            ${escape(company)}
+                        </p>
 
                     </div>
 
-                    <div class="job-card-tags">
 
-                        ${
-                            jobType
-                                ? `
-                                    <span class="tag tag-primary">
-                                        ${escapeJobDetailsHtml(
-                                            jobType
-                                        )}
-                                    </span>
-                                `
-                                : ""
-                        }
-
-                        ${
-                            workMode
-                                ? `
-                                    <span class="tag tag-success">
-                                        ${escapeJobDetailsHtml(
-                                            workMode
-                                        )}
-                                    </span>
-                                `
-                                : ""
-                        }
-
-                        ${
-                            category
-                                ? `
-                                    <span class="tag">
-                                        ${escapeJobDetailsHtml(
-                                            category
-                                        )}
-                                    </span>
-                                `
-                                : ""
-                        }
-
-                    </div>
-
-                </div>
-
-                <div class="job-detail-actions">
-
-                    ${
-                        applyUrl
-                            ? `
-                                <a
-                                    class="button button-primary"
-                                    href="${escapeJobDetailsHtml(
-                                        applyUrl
-                                    )}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Apply now ↗
-                                </a>
-                            `
-                            : `
-                                <span class="button button-secondary">
-                                    Application link unavailable
-                                </span>
-                            `
-                    }
-
-                    <button
-                        type="button"
-                        class="bookmark-button"
-                        id="jobDetailsBookmark"
-                        aria-label="Save this job"
-                        aria-pressed="false"
+                    <a
+                        class="button button-primary"
+                        href="${escape(applyUrl)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
                     >
-                        ♡
-                    </button>
+                        Apply on source
+                    </a>
 
                 </div>
 
-            </header>
 
-            <div class="job-detail-layout">
+                <div class="job-detail-meta">
 
-                <div class="job-detail-main">
+                    <span>
+                        📍 ${escape(location)}
+                    </span>
 
-                    ${renderDetailSection(
-                        "Job description",
-                        description
-                    )}
+                    <span>
+                        💼 ${escape(jobType)}
+                    </span>
 
-                    ${renderDetailSection(
-                        "Responsibilities",
-                        responsibilities
-                    )}
+                    <span>
+                        🏠 ${escape(workMode)}
+                    </span>
 
-                    ${renderDetailSection(
-                        "Requirements",
-                        requirements
-                    )}
-
-                    ${renderDetailSection(
-                        "Skills",
-                        skills
-                    )}
+                    <span>
+                        💰 ${escape(salary)}
+                    </span>
 
                 </div>
 
-                <aside class="job-detail-sidebar">
 
-                    ${
-                        salary
-                            ? `
-                                <div class="job-detail-sidebar-card">
+                <div class="job-detail-body">
 
-                                    <h3>
-                                        Salary
-                                    </h3>
+                    <section class="detail-section">
 
-                                    <p class="job-detail-salary">
-                                        ${escapeJobDetailsHtml(
-                                            salary
-                                        )}
-                                    </p>
+                        <h2>
+                            Job description
+                        </h2>
 
-                                </div>
-                            `
-                            : ""
-                    }
-
-                    <div class="job-detail-sidebar-card">
-
-                        <h3>
-                            Job information
-                        </h3>
-
-                        <div class="job-detail-info-list">
-
-                            <div class="info-item">
-                                <span>Company</span>
-                                <strong>
-                                    ${escapeJobDetailsHtml(
-                                        job.company
-                                    )}
-                                </strong>
-                            </div>
-
-                            <div class="info-item">
-                                <span>Location</span>
-                                <strong>
-                                    ${escapeJobDetailsHtml(
-                                        job.location
-                                    )}
-                                </strong>
-                            </div>
-
-                            ${
-                                jobType
-                                    ? `
-                                        <div class="info-item">
-                                            <span>Employment type</span>
-                                            <strong>
-                                                ${escapeJobDetailsHtml(
-                                                    jobType
-                                                )}
-                                            </strong>
-                                        </div>
-                                    `
-                                    : ""
-                            }
-
-                            ${
-                                workMode
-                                    ? `
-                                        <div class="info-item">
-                                            <span>Work mode</span>
-                                            <strong>
-                                                ${escapeJobDetailsHtml(
-                                                    workMode
-                                                )}
-                                            </strong>
-                                        </div>
-                                    `
-                                    : ""
-                            }
-
-                            ${
-                                category
-                                    ? `
-                                        <div class="info-item">
-                                            <span>Category</span>
-                                            <strong>
-                                                ${escapeJobDetailsHtml(
-                                                    category
-                                                )}
-                                            </strong>
-                                        </div>
-                                    `
-                                    : ""
-                            }
-
-                            <div class="info-item">
-                                <span>Posted</span>
-                                <strong>
-                                    ${escapeJobDetailsHtml(
-                                        postedDate
-                                    )}
-                                </strong>
-                            </div>
-
+                        <div class="detail-text">
+                            ${escape(description)}
                         </div>
 
-                    </div>
+                    </section>
+
 
                     ${
-                        applyUrl
+                        responsibilities
                             ? `
-                                <div class="job-detail-sidebar-card">
+                                <section class="detail-section">
 
-                                    <h3>
-                                        Interested in this role?
-                                    </h3>
+                                    <h2>
+                                        Responsibilities
+                                    </h2>
 
-                                    <p>
-                                        Continue to the original source to complete your application.
-                                    </p>
+                                    <div class="detail-text">
+                                        ${escape(responsibilities)}
+                                    </div>
 
-                                    <a
-                                        class="button button-primary button-block"
-                                        href="${escapeJobDetailsHtml(
-                                            applyUrl
-                                        )}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Apply on source ↗
-                                    </a>
-
-                                </div>
-                            `
+                                </section>
+                              `
                             : ""
                     }
 
-                </aside>
 
-            </div>
+                    ${
+                        requirements
+                            ? `
+                                <section class="detail-section">
 
-        </article>
-    `;
+                                    <h2>
+                                        Requirements
+                                    </h2>
 
-    initializeJobDetailsBookmark(job);
-}
+                                    <div class="detail-text">
+                                        ${escape(requirements)}
+                                    </div>
+
+                                </section>
+                              `
+                            : ""
+                    }
 
 
-/* =========================================================
-   BOOKMARK
-   ========================================================= */
+                    ${
+                        skills.length
+                            ? `
 
-function initializeJobDetailsBookmark(job) {
+                                <section class="detail-section">
 
-    const button =
-        jobDetailsElement(
-            "#jobDetailsBookmark"
-        );
+                                    <h2>
+                                        Skills
+                                    </h2>
 
-    if (!button) {
-        return;
+                                    <div class="skill-list">
+
+                                        ${
+                                            skills.map(function (skill) {
+
+                                                return `
+                                                    <span class="skill-badge">
+                                                        ${escape(skill)}
+                                                    </span>
+                                                `;
+
+                                            }).join("")
+                                        }
+
+                                    </div>
+
+                                </section>
+
+                              `
+                            : ""
+                    }
+
+
+                    <section class="detail-section">
+
+                        <h2>
+                            Job information
+                        </h2>
+
+                        <dl class="detail-list">
+
+                            <div>
+                                <dt>Source</dt>
+                                <dd>${escape(source)}</dd>
+                            </div>
+
+                            <div>
+                                <dt>Published</dt>
+                                <dd>
+                                    ${escape(
+                                        formatDate(job?.published_at)
+                                    )}
+                                </dd>
+                            </div>
+
+                        </dl>
+
+                    </section>
+
+                </div>
+
+            </article>
+
+        `;
+
     }
 
-    const storageKey =
-        `jobboard_saved_job_${job.id}`;
 
-    let saved =
-        false;
+    async function loadJobDetails() {
 
-    try {
-        saved =
-            window.localStorage.getItem(
-                storageKey
-            ) === "true";
-    } catch (error) {
-        saved = false;
-    }
+        const container =
+            document.getElementById("jobDetails");
 
-    updateBookmarkButton(
-        button,
-        saved
-    );
 
-    button.addEventListener(
-        "click",
-        () => {
-
-            saved = !saved;
-
-            try {
-                window.localStorage.setItem(
-                    storageKey,
-                    String(saved)
-                );
-            } catch (error) {
-                console.warn(
-                    "Unable to save bookmark:",
-                    error
-                );
-            }
-
-            updateBookmarkButton(
-                button,
-                saved
-            );
+        if (!container) {
+            return;
         }
-    );
-}
 
 
-function updateBookmarkButton(button, saved) {
-
-    button.textContent =
-        saved
-            ? "♥"
-            : "♡";
-
-    button.setAttribute(
-        "aria-pressed",
-        String(saved)
-    );
-
-    button.setAttribute(
-        "aria-label",
-        saved
-            ? "Remove saved job"
-            : "Save this job"
-    );
-
-    button.classList.toggle(
-        "is-saved",
-        saved
-    );
-}
+        const jobId =
+            getJobId();
 
 
-/* =========================================================
-   LOAD JOB DETAILS
-   ========================================================= */
+        if (!jobId) {
 
-async function loadJobDetails() {
-
-    if (
-        !window.JobBoardAPI ||
-        !window.JobBoardAPI.jobs
-    ) {
-        showJobDetailsError(
-            "The JobBoard API client is unavailable."
-        );
-
-        return;
-    }
-
-    if (!jobDetailsState.jobId) {
-        showJobDetailsEmpty();
-
-        return;
-    }
-
-    if (jobDetailsState.loading) {
-        return;
-    }
-
-    jobDetailsState.loading = true;
-
-    showJobDetailsLoading();
-
-    try {
-
-        const response =
-            await window.JobBoardAPI.jobs.get(
-                jobDetailsState.jobId
+            window.JobBoardUI.showError(
+                container,
+                "No job was selected."
             );
-
-        const rawJob =
-            response?.job ||
-            response?.data ||
-            response;
-
-        const job =
-            normalizeJobDetails(
-                rawJob
-            );
-
-        if (!job) {
-            showJobDetailsEmpty();
 
             return;
         }
 
-        jobDetailsState.job =
-            job;
 
-        renderJobDetails(
-            job
+        if (!window.JobBoardAPI) {
+
+            window.JobBoardUI.showError(
+                container,
+                "JobBoard API client is unavailable."
+            );
+
+            return;
+        }
+
+
+        window.JobBoardUI.showLoading(
+            container,
+            "Loading job details..."
         );
 
-        document.title =
-            `${job.title} — JobBoard`;
 
-    } catch (error) {
+        try {
 
-        console.error(
-            "Failed to load job details:",
-            error
-        );
+            const response =
+                await window.JobBoardAPI.getJob(
+                    jobId
+                );
 
-        showJobDetailsError(
-            error.message
-        );
 
-    } finally {
+            const job =
+                response?.data ||
+                response?.job ||
+                null;
 
-        jobDetailsState.loading = false;
+
+            if (!job) {
+
+                window.JobBoardUI.showError(
+                    container,
+                    "Job not found."
+                );
+
+                return;
+            }
+
+
+            renderJob(
+                job,
+                container
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Job details error:",
+                error
+            );
+
+
+            window.JobBoardUI.showError(
+                container,
+                error.message ||
+                "Unable to load job details."
+            );
+
+        }
+
     }
-}
 
-
-/* =========================================================
-   INITIALIZE PAGE
-   ========================================================= */
-
-function initializeJobDetailsPage() {
-
-    const isJobDetailsPage =
-        window.location.pathname
-            .toLowerCase()
-            .includes("job-details.html");
-
-    if (!isJobDetailsPage) {
-        return;
-    }
-
-    jobDetailsState.jobId =
-        readJobId();
-
-    loadJobDetails();
-}
-
-
-/* =========================================================
-   START
-   ========================================================= */
-
-if (document.readyState === "loading") {
 
     document.addEventListener(
         "DOMContentLoaded",
-        initializeJobDetailsPage
+        loadJobDetails
     );
 
-} else {
 
-    initializeJobDetailsPage();
-}
+    window.JobBoardJobDetails = {
+        loadJobDetails
+    };
+
+
+})();

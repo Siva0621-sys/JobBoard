@@ -1,1534 +1,893 @@
-﻿/* =========================================================
-   JOBBOARD — MAIN JAVASCRIPT
-   ========================================================= */
+﻿/*
+=========================================================
+JOBBOARD MAIN
+Shared header, footer and homepage functionality
+=========================================================
+*/
 
-"use strict";
+(function () {
 
-
-/* =========================================================
-   DOM HELPERS
-   ========================================================= */
-
-function $(selector, parent = document) {
-    return parent.querySelector(selector);
-}
-
-function $$(selector, parent = document) {
-    return Array.from(
-        parent.querySelectorAll(selector)
-    );
-}
+    "use strict";
 
 
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
+    function escapeHTML(value) {
 
-function escapeMainHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
 
-    const element =
-        document.createElement("div");
-
-    element.textContent =
-        String(value ?? "");
-
-    return element.innerHTML;
-}
-
-
-/* =========================================================
-   FORMATTERS
-   ========================================================= */
-
-function formatMainLabel(value) {
-
-    return String(value || "")
-        .replace(/[_-]+/g, " ")
-        .replace(/\b\w/g, (letter) =>
-            letter.toUpperCase()
-        );
-}
-
-
-function formatMainDate(value) {
-
-    if (!value) {
-        return "Recently posted";
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 
-    const date =
-        new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
-        return "Recently posted";
-    }
+    function createHeader() {
 
-    return date.toLocaleDateString(
-        "en-IN",
-        {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
+        const header =
+            document.getElementById("site-header");
+
+        if (!header) {
+            return;
         }
-    );
-}
 
 
-function stripMainHtml(value) {
+        header.className = "site-header";
 
-    const element =
-        document.createElement("div");
 
-    element.innerHTML =
-        String(value ?? "");
+        header.innerHTML = `
 
-    return (
-        element.textContent ||
-        element.innerText ||
-        ""
-    ).replace(/\s+/g, " ").trim();
-}
+            <div class="container header-inner">
 
-
-/* =========================================================
-   MOBILE NAVIGATION
-   ========================================================= */
-
-function initializeMobileNavigation() {
-
-    const header =
-        $(".site-header");
-
-    const menuButton =
-        $(".mobile-menu-button");
-
-    const navigation =
-        $(".main-navigation");
-
-    if (
-        !header ||
-        !menuButton ||
-        !navigation
-    ) {
-        return;
-    }
-
-    menuButton.setAttribute(
-        "aria-expanded",
-        "false"
-    );
-
-    menuButton.addEventListener(
-        "click",
-        () => {
-
-            const active =
-                header.classList.toggle(
-                    "menu-active"
-                );
-
-            menuButton.setAttribute(
-                "aria-expanded",
-                String(active)
-            );
-
-            menuButton.setAttribute(
-                "aria-label",
-                active
-                    ? "Close navigation menu"
-                    : "Open navigation menu"
-            );
-        }
-    );
-
-    $$(".main-navigation a").forEach(
-        (link) => {
-
-            link.addEventListener(
-                "click",
-                () => {
-
-                    header.classList.remove(
-                        "menu-active"
-                    );
-
-                    menuButton.setAttribute(
-                        "aria-expanded",
-                        "false"
-                    );
-
-                    menuButton.setAttribute(
-                        "aria-label",
-                        "Open navigation menu"
-                    );
-                }
-            );
-        }
-    );
-}
-
-
-/* =========================================================
-   ACTIVE NAVIGATION
-   ========================================================= */
-
-function initializeActiveNavigation() {
-
-    const currentPage =
-        window.location.pathname
-            .split("/")
-            .pop() ||
-        "index.html";
-
-    $$(".main-navigation a").forEach(
-        (link) => {
-
-            const href =
-                link.getAttribute("href") ||
-                "";
-
-            const linkPage =
-                href.split("?")[0]
-                    .split("#")[0]
-                    .split("/")
-                    .pop();
-
-            const isActive =
-                linkPage === currentPage ||
-                (
-                    currentPage === "" &&
-                    linkPage === "index.html"
-                );
-
-            link.classList.toggle(
-                "active",
-                isActive
-            );
-
-            if (isActive) {
-                link.setAttribute(
-                    "aria-current",
-                    "page"
-                );
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   SEARCH REDIRECTION
-   ========================================================= */
-
-function redirectToJobsSearch(keyword = "", location = "") {
-
-    const params =
-        new URLSearchParams();
-
-    if (keyword.trim()) {
-        params.set(
-            "keyword",
-            keyword.trim()
-        );
-    }
-
-    if (location.trim()) {
-        params.set(
-            "location",
-            location.trim()
-        );
-    }
-
-    const query =
-        params.toString();
-
-    window.location.href =
-        query
-            ? `jobs.html?${query}`
-            : "jobs.html";
-}
-
-
-function initializeGlobalSearchForms() {
-
-    $$(".search-form, #heroSearchForm, #searchForm").forEach(
-        (form) => {
-
-            if (
-                form.dataset.searchInitialized ===
-                "true"
-            ) {
-                return;
-            }
-
-            form.dataset.searchInitialized =
-                "true";
-
-            const keywordInput =
-                form.querySelector(
-                    'input[name="keyword"], input[name="q"], input[name="search"]'
-                );
-
-            const locationInput =
-                form.querySelector(
-                    'input[name="location"]'
-                );
-
-            form.addEventListener(
-                "submit",
-                (event) => {
-
-                    event.preventDefault();
-
-                    redirectToJobsSearch(
-                        keywordInput?.value || "",
-                        locationInput?.value || ""
-                    );
-                }
-            );
-        }
-    );
-}
-
-
-function initializePopularSearches() {
-
-    $$(".popular-search, [data-search-keyword]").forEach(
-        (element) => {
-
-            element.addEventListener(
-                "click",
-                (event) => {
-
-                    event.preventDefault();
-
-                    const keyword =
-                        element.dataset.searchKeyword ||
-                        element.textContent.trim();
-
-                    redirectToJobsSearch(
-                        keyword,
-                        ""
-                    );
-                }
-            );
-        }
-    );
-}
-
-
-function initializeHeaderSearchButton() {
-
-    const button =
-        $(".header-search-button");
-
-    if (!button) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        () => {
-
-            window.location.href =
-                "jobs.html";
-        }
-    );
-}
-
-
-/* =========================================================
-   BOOKMARKS
-   ========================================================= */
-
-function initializeBookmarkButtons() {
-
-    $$(".bookmark-button[data-job-id]").forEach(
-        (button) => {
-
-            if (
-                button.dataset.bookmarkInitialized ===
-                "true"
-            ) {
-                return;
-            }
-
-            button.dataset.bookmarkInitialized =
-                "true";
-
-            const jobId =
-                button.dataset.jobId;
-
-            const storageKey =
-                `jobboard_saved_job_${jobId}`;
-
-            let saved =
-                false;
-
-            try {
-
-                saved =
-                    window.localStorage.getItem(
-                        storageKey
-                    ) === "true";
-
-            } catch (error) {
-
-                saved = false;
-            }
-
-            updateMainBookmarkButton(
-                button,
-                saved
-            );
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    saved =
-                        !saved;
-
-                    try {
-
-                        window.localStorage.setItem(
-                            storageKey,
-                            String(saved)
-                        );
-
-                    } catch (error) {
-
-                        console.warn(
-                            "Unable to save bookmark:",
-                            error
-                        );
-                    }
-
-                    updateMainBookmarkButton(
-                        button,
-                        saved
-                    );
-                }
-            );
-        }
-    );
-}
-
-
-function updateMainBookmarkButton(button, saved) {
-
-    button.textContent =
-        saved
-            ? "♥"
-            : "♡";
-
-    button.setAttribute(
-        "aria-pressed",
-        String(saved)
-    );
-
-    button.setAttribute(
-        "aria-label",
-        saved
-            ? "Remove saved job"
-            : "Save this job"
-    );
-
-    button.classList.toggle(
-        "is-saved",
-        saved
-    );
-}
-
-
-/* =========================================================
-   CURRENT YEAR
-   ========================================================= */
-
-function initializeCurrentYear() {
-
-    const year =
-        new Date().getFullYear();
-
-    $$(".current-year, #currentYear").forEach(
-        (element) => {
-            element.textContent =
-                year;
-        }
-    );
-}
-
-
-/* =========================================================
-   HOMEPAGE HELPERS
-   ========================================================= */
-
-function isHomepage() {
-
-    const page =
-        window.location.pathname
-            .split("/")
-            .pop();
-
-    return (
-        page === "" ||
-        page === "index.html"
-    );
-}
-
-
-function getMainApiList(response) {
-
-    if (
-        window.JobBoardAPI &&
-        typeof window.JobBoardAPI.normalizeList ===
-        "function"
-    ) {
-        return window.JobBoardAPI.normalizeList(
-            response
-        );
-    }
-
-    if (Array.isArray(response)) {
-        return response;
-    }
-
-    return (
-        response?.items ||
-        response?.results ||
-        response?.jobs ||
-        response?.companies ||
-        response?.categories ||
-        response?.data ||
-        []
-    );
-}
-
-
-function getMainJobId(job) {
-
-    return (
-        job.id ??
-        job.job_id ??
-        job.external_id ??
-        job.slug ??
-        ""
-    );
-}
-
-
-function getMainJobTitle(job) {
-
-    return (
-        job.title ||
-        job.job_title ||
-        "Untitled job"
-    );
-}
-
-
-function getMainCompanyName(job) {
-
-    return (
-        job.company_name ||
-        job.company ||
-        job.employer_name ||
-        "Company not specified"
-    );
-}
-
-
-function getMainJobLocation(job) {
-
-    return (
-        job.location ||
-        job.city ||
-        job.job_location ||
-        "Location not specified"
-    );
-}
-
-
-function getMainJobLogo(job) {
-
-    return (
-        job.company_logo ||
-        job.logo_url ||
-        job.company_logo_url ||
-        ""
-    );
-}
-
-
-function getMainJobType(job) {
-
-    return (
-        job.job_type ||
-        job.employment_type ||
-        job.type ||
-        ""
-    );
-}
-
-
-function getMainWorkMode(job) {
-
-    return (
-        job.work_mode ||
-        job.remote_type ||
-        job.remote ||
-        ""
-    );
-}
-
-
-function createMainJobCard(job) {
-
-    const id =
-        getMainJobId(job);
-
-    const title =
-        getMainJobTitle(job);
-
-    const company =
-        getMainCompanyName(job);
-
-    const location =
-        getMainJobLocation(job);
-
-    const logo =
-        getMainJobLogo(job);
-
-    const jobType =
-        getMainJobType(job);
-
-    const workMode =
-        getMainWorkMode(job);
-
-    const source =
-        job.source ||
-        job.source_name ||
-        "";
-
-    const description =
-        stripMainHtml(
-            job.description ||
-            job.summary ||
-            ""
-        );
-
-    const slug =
-        job.slug ||
-        id;
-
-    const logoMarkup =
-        logo
-            ? `
-                <img
-                    src="${escapeMainHtml(logo)}"
-                    alt="${escapeMainHtml(company)} logo"
-                    loading="lazy"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                <a
+                    href="index.html"
+                    class="brand"
+                    aria-label="JobBoard home"
                 >
+                    <span class="brand-mark">JB</span>
+                    <span>JobBoard</span>
+                </a>
 
-                <span
-                    class="company-logo-fallback"
-                    aria-hidden="true"
-                    style="display:none;"
-                >
-                    ${escapeMainHtml(
-                        company.charAt(0).toUpperCase()
-                    )}
-                </span>
-            `
-            : `
-                <span
-                    class="company-logo-fallback"
-                    aria-hidden="true"
-                >
-                    ${escapeMainHtml(
-                        company.charAt(0).toUpperCase()
-                    )}
-                </span>
-            `;
-
-    return `
-        <article class="job-card">
-
-            <div class="job-card-top">
-
-                <div class="job-company-logo">
-                    ${logoMarkup}
-                </div>
 
                 <button
                     type="button"
-                    class="bookmark-button"
-                    data-job-id="${escapeMainHtml(id)}"
-                    aria-label="Save ${escapeMainHtml(title)}"
-                    aria-pressed="false"
+                    class="menu-toggle"
+                    id="menu-toggle"
+                    aria-label="Open navigation"
+                    aria-expanded="false"
                 >
-                    ♡
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </button>
 
-            </div>
 
-            <div class="job-card-content">
-
-                <a
-                    href="job-details.html?id=${encodeURIComponent(slug)}"
-                    class="job-card-title"
+                <nav
+                    class="main-navigation"
+                    id="main-navigation"
                 >
-                    ${escapeMainHtml(title)}
-                </a>
 
-                <p class="job-card-company">
-                    ${escapeMainHtml(company)}
-                </p>
+                    <a href="index.html">Home</a>
 
-                <div class="job-card-meta">
+                    <a href="jobs.html">Jobs</a>
 
-                    <span>
-                        📍
-                        ${escapeMainHtml(location)}
-                    </span>
+                    <a href="categories.html">
+                        Categories
+                    </a>
 
-                    ${
-                        jobType
-                            ? `
-                                <span>
-                                    💼
-                                    ${escapeMainHtml(
-                                        formatMainLabel(jobType)
-                                    )}
-                                </span>
-                            `
-                            : ""
-                    }
+                    <a href="companies.html">
+                        Companies
+                    </a>
 
-                    ${
-                        workMode
-                            ? `
-                                <span>
-                                    🌐
-                                    ${escapeMainHtml(
-                                        formatMainLabel(workMode)
-                                    )}
-                                </span>
-                            `
-                            : ""
-                    }
+                    <a href="search.html">
+                        Search
+                    </a>
 
-                </div>
+                    <a href="about.html">
+                        About
+                    </a>
 
-                ${
-                    description
-                        ? `
-                            <p class="job-card-description">
-                                ${escapeMainHtml(
-                                    description.slice(0, 145)
-                                )}${description.length > 145 ? "..." : ""}
-                            </p>
-                        `
-                        : ""
-                }
-
-                <div class="job-card-tags">
-
-                    ${
-                        jobType
-                            ? `
-                                <span class="tag tag-primary">
-                                    ${escapeMainHtml(
-                                        formatMainLabel(jobType)
-                                    )}
-                                </span>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        workMode
-                            ? `
-                                <span class="tag tag-success">
-                                    ${escapeMainHtml(
-                                        formatMainLabel(workMode)
-                                    )}
-                                </span>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        source
-                            ? `
-                                <span class="tag">
-                                    ${escapeMainHtml(source)}
-                                </span>
-                            `
-                            : ""
-                    }
-
-                </div>
+                </nav>
 
             </div>
 
-        </article>
-    `;
-}
+        `;
 
 
-function createMainCompanyCard(company) {
+        setupNavigation();
 
-    const id =
-        company.id ??
-        company.company_id ??
-        company.slug ??
-        "";
+    }
 
-    const name =
-        company.name ||
-        company.company_name ||
-        "Company";
 
-    const industry =
-        company.industry ||
-        company.industry_name ||
-        "Various industries";
+    function setupNavigation() {
 
-    const description =
-        stripMainHtml(
-            company.description ||
-            company.summary ||
-            "Explore opportunities from this company."
+        const toggle =
+            document.getElementById("menu-toggle");
+
+        const navigation =
+            document.getElementById("main-navigation");
+
+
+        if (!toggle || !navigation) {
+            return;
+        }
+
+
+        toggle.addEventListener(
+            "click",
+            function () {
+
+                const open =
+                    navigation.classList.toggle("open");
+
+                toggle.setAttribute(
+                    "aria-expanded",
+                    String(open)
+                );
+
+            }
         );
 
-    const logo =
-        company.logo_url ||
-        company.logo ||
-        company.company_logo ||
-        "";
 
-    const jobCount =
-        company.job_count ??
-        company.jobs_count ??
-        company.open_jobs ??
-        0;
+        const current =
+            window.location.pathname
+                .split("/")
+                .pop()
+                .toLowerCase();
 
-    const slug =
-        company.slug ||
-        id ||
-        name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "");
 
-    return `
-        <article class="company-card">
+        navigation
+            .querySelectorAll("a")
+            .forEach(function (link) {
 
-            <div class="company-card-header">
+                const href =
+                    link.getAttribute("href")
+                        .split("/")
+                        .pop()
+                        .toLowerCase();
 
-                <div class="company-logo">
 
-                    ${
-                        logo
-                            ? `
-                                <img
-                                    src="${escapeMainHtml(logo)}"
-                                    alt="${escapeMainHtml(name)} logo"
-                                    loading="lazy"
-                                >
-                            `
-                            : `
-                                <span
-                                    class="company-logo-fallback"
-                                    aria-hidden="true"
-                                >
-                                    ${escapeMainHtml(
-                                        name.charAt(0).toUpperCase()
-                                    )}
-                                </span>
-                            `
-                    }
+                if (
+                    href === current ||
+                    (
+                        current === "" &&
+                        href === "index.html"
+                    )
+                ) {
+                    link.classList.add("active");
+                }
 
-                </div>
+            });
+
+    }
+
+
+    function createFooter() {
+
+        const footer =
+            document.getElementById("site-footer");
+
+        if (!footer) {
+            return;
+        }
+
+
+        footer.className = "site-footer";
+
+
+        footer.innerHTML = `
+
+            <div class="container footer-inner">
 
                 <div>
 
-                    <h3 class="company-name">
-                        ${escapeMainHtml(name)}
-                    </h3>
+                    <div class="footer-brand">
+                        JobBoard
+                    </div>
 
-                    <p class="company-industry">
-                        ${escapeMainHtml(industry)}
+                    <p>
+                        Discover opportunities from
+                        multiple job sources.
                     </p>
 
                 </div>
 
+
+                <div class="footer-links">
+
+                    <a href="jobs.html">
+                        Jobs
+                    </a>
+
+                    <a href="categories.html">
+                        Categories
+                    </a>
+
+                    <a href="companies.html">
+                        Companies
+                    </a>
+
+                    <a href="about.html">
+                        About
+                    </a>
+
+                </div>
+
             </div>
 
-            <p class="company-card-description">
-                ${escapeMainHtml(
-                    description.slice(0, 125)
-                )}${description.length > 125 ? "..." : ""}
-            </p>
+        `;
 
-            <div class="company-card-footer">
-
-                <span class="company-job-count">
-                    ${Number(jobCount).toLocaleString()}
-                    ${Number(jobCount) === 1 ? "job" : "jobs"}
-                </span>
-
-                <a
-                    class="company-view-link"
-                    href="company-details.html?id=${encodeURIComponent(slug)}"
-                >
-                    View company →
-                </a>
-
-            </div>
-
-        </article>
-    `;
-}
-
-
-function createMainCategoryCard(category) {
-
-    const id =
-        category.id ??
-        category.category_id ??
-        category.slug ??
-        "";
-
-    const name =
-        category.name ||
-        category.category_name ||
-        "Category";
-
-    const count =
-        category.job_count ??
-        category.jobs_count ??
-        category.open_jobs ??
-        0;
-
-    const slug =
-        category.slug ||
-        id ||
-        name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "");
-
-    return `
-        <a
-            class="category-card"
-            href="jobs.html?category=${encodeURIComponent(slug)}"
-        >
-
-            <span
-                class="category-icon"
-                aria-hidden="true"
-            >
-                📁
-            </span>
-
-            <span class="category-card-content">
-
-                <span class="category-name">
-                    ${escapeMainHtml(name)}
-                </span>
-
-                <span class="category-count">
-                    ${Number(count).toLocaleString()}
-                    ${Number(count) === 1 ? "job" : "jobs"}
-                </span>
-
-            </span>
-
-            <span
-                class="category-arrow"
-                aria-hidden="true"
-            >
-                →
-            </span>
-
-        </a>
-    `;
-}
-
-
-/* =========================================================
-   HOMEPAGE CONTAINER
-   ========================================================= */
-
-function getHomepageContainer(selectors) {
-
-    for (const selector of selectors) {
-
-        const element =
-            $(selector);
-
-        if (element) {
-            return element;
-        }
     }
 
-    return null;
-}
 
+    function getJobTitle(job) {
 
-function renderMainList(
-    selectors,
-    items,
-    cardRenderer,
-    emptyMessage = "No data available yet."
-) {
-
-    const container =
-        getHomepageContainer(
-            selectors
+        return (
+            job?.title ||
+            "Untitled position"
         );
 
-    if (!container) {
-        return;
     }
 
-    if (
-        !Array.isArray(items) ||
-        !items.length
-    ) {
+
+    function getCompanyName(job) {
+
+        return (
+            job?.company_name ||
+            "Company not specified"
+        );
+
+    }
+
+
+    function getLocation(job) {
+
+        return (
+            job?.location ||
+            job?.city ||
+            "Location not specified"
+        );
+
+    }
+
+
+    function getJobUrl(job) {
+
+        if (!job?.id) {
+            return "jobs.html";
+        }
+
+        return (
+            `job-details.html?id=${encodeURIComponent(job.id)}`
+        );
+
+    }
+
+
+    function renderJobCard(job) {
+
+        const title =
+            escapeHTML(getJobTitle(job));
+
+        const company =
+            escapeHTML(getCompanyName(job));
+
+        const location =
+            escapeHTML(getLocation(job));
+
+        const type =
+            escapeHTML(
+                job?.job_type ||
+                "Job"
+            );
+
+        const mode =
+            escapeHTML(
+                job?.work_mode ||
+                "Flexible"
+            );
+
+
+        return `
+
+            <article class="job-card">
+
+                <div class="job-card-top">
+
+                    <div>
+
+                        <h3>
+                            <a href="${getJobUrl(job)}">
+                                ${title}
+                            </a>
+                        </h3>
+
+                        <p class="job-company">
+                            ${company}
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="job-meta">
+
+                    <span>
+                        ${location}
+                    </span>
+
+                    <span>
+                        ${type}
+                    </span>
+
+                    <span>
+                        ${mode}
+                    </span>
+
+                </div>
+
+
+                ${
+                    job?.description
+                    ?
+                    `
+                    <p class="job-description">
+                        ${escapeHTML(
+                            String(job.description)
+                                .replace(/<[^>]*>/g, "")
+                        )}
+                    </p>
+                    `
+                    :
+                    ""
+                }
+
+
+                <div class="job-card-footer">
+
+                    <span class="job-date">
+                        ${
+                            job?.published_at
+                            ?
+                            new Date(
+                                job.published_at
+                            ).toLocaleDateString()
+                            :
+                            ""
+                        }
+                    </span>
+
+
+                    <a
+                        href="${getJobUrl(job)}"
+                        class="job-apply"
+                    >
+                        View job →
+                    </a>
+
+                </div>
+
+            </article>
+
+        `;
+
+    }
+
+
+    function renderJobGrid(container, jobs) {
+
+        if (!container) {
+            return;
+        }
+
+
+        if (!Array.isArray(jobs) || jobs.length === 0) {
+
+            container.innerHTML = `
+
+                <div class="empty-state">
+
+                    <h3>
+                        No jobs available
+                    </h3>
+
+                    <p>
+                        No live opportunities are available
+                        right now.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+        }
+
+
+        container.innerHTML =
+            jobs.map(renderJobCard).join("");
+
+    }
+
+
+    function showLoading(container, message) {
+
+        if (!container) {
+            return;
+        }
+
 
         container.innerHTML = `
-            <div class="empty-state">
+
+            <div class="loading-state">
+
+                <div class="loading-spinner"></div>
 
                 <p>
-                    ${escapeMainHtml(emptyMessage)}
+                    ${escapeHTML(
+                        message || "Loading..."
+                    )}
                 </p>
 
             </div>
+
         `;
 
-        return;
     }
 
-    container.innerHTML =
-        items
-            .map(cardRenderer)
-            .join("");
 
-    initializeBookmarkButtons();
-}
+    function showError(container, message) {
 
-
-/* =========================================================
-   HOMEPAGE STATISTICS
-   ========================================================= */
-
-async function loadHomepageStats() {
-
-    if (
-        !window.JobBoardAPI ||
-        !window.JobBoardAPI.stats
-    ) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await window.JobBoardAPI.stats.overview();
-
-        const stats =
-            response?.data ||
-            response?.stats ||
-            response ||
-            {};
-
-        const values = {
-            totalJobs:
-                stats.total_jobs ??
-                stats.jobs ??
-                stats.job_count,
-
-            totalCompanies:
-                stats.total_companies ??
-                stats.companies ??
-                stats.company_count,
-
-            totalCategories:
-                stats.total_categories ??
-                stats.categories ??
-                stats.category_count,
-
-            remoteJobs:
-                stats.remote_jobs ??
-                stats.remote_job_count
-        };
-
-        Object.entries(values).forEach(
-            ([id, value]) => {
-
-                const element =
-                    document.getElementById(id);
-
-                if (
-                    element &&
-                    value !== undefined &&
-                    value !== null
-                ) {
-                    element.textContent =
-                        Number(value).toLocaleString();
-                }
-            }
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Homepage statistics unavailable:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   HOMEPAGE JOBS
-   ========================================================= */
-
-async function loadHomepageJobs() {
-
-    if (
-        !window.JobBoardAPI ||
-        !window.JobBoardAPI.jobs
-    ) {
-        return;
-    }
-
-    const requests = [
-        {
-            selector: [
-                "#trendingJobs",
-                "#trendingJobsList"
-            ],
-            request:
-                () => window.JobBoardAPI.trends.jobs({
-                    limit: 6
-                }),
-            empty:
-                "No trending jobs available yet."
-        },
-        {
-            selector: [
-                "#latestJobs",
-                "#latestJobsList"
-            ],
-            request:
-                () => window.JobBoardAPI.jobs.list({
-                    sort: "latest",
-                    page: 1,
-                    limit: 6
-                }),
-            empty:
-                "No latest jobs available yet."
-        },
-        {
-            selector: [
-                "#remoteJobsList",
-                "#remoteJobs"
-            ],
-            request:
-                () => window.JobBoardAPI.jobs.list({
-                    work_mode: "remote",
-                    page: 1,
-                    limit: 6
-                }),
-            empty:
-                "No remote jobs available yet."
-        },
-        {
-            selector: [
-                "#internshipJobs",
-                "#internshipJobsList"
-            ],
-            request:
-                () => window.JobBoardAPI.jobs.list({
-                    job_type: "internship",
-                    page: 1,
-                    limit: 6
-                }),
-            empty:
-                "No internship jobs available yet."
+        if (!container) {
+            return;
         }
-    ];
 
-    await Promise.all(
-        requests.map(
-            async (item) => {
 
-                const container =
-                    getHomepageContainer(
-                        item.selector
+        container.innerHTML = `
+
+            <div class="error-state">
+
+                <h3>
+                    Something went wrong
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        message ||
+                        "Unable to load data."
+                    )}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    async function loadHome() {
+
+        const jobsContainer =
+            document.getElementById("home-jobs");
+
+        const categoriesContainer =
+            document.getElementById("home-categories");
+
+        const trendingContainer =
+            document.getElementById("home-trending");
+
+
+        const isHome =
+            jobsContainer ||
+            categoriesContainer ||
+            trendingContainer;
+
+
+        if (!isHome) {
+            return;
+        }
+
+
+        if (!window.JobBoardAPI) {
+
+            showError(
+                jobsContainer,
+                "JobBoard API client is unavailable."
+            );
+
+            return;
+        }
+
+
+        if (jobsContainer) {
+
+            showLoading(
+                jobsContainer,
+                "Loading jobs..."
+            );
+
+
+            try {
+
+                const response =
+                    await window.JobBoardAPI.getJobs({
+                        page: 1,
+                        limit: 6
+                    });
+
+
+                const jobs =
+                    window.JobBoardAPI.normalizeList(
+                        response
                     );
 
-                if (!container) {
-                    return;
+
+                renderJobGrid(
+                    jobsContainer,
+                    jobs
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Home jobs error:",
+                    error
+                );
+
+
+                showError(
+                    jobsContainer,
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        if (categoriesContainer) {
+
+            showLoading(
+                categoriesContainer,
+                "Loading categories..."
+            );
+
+
+            try {
+
+                const response =
+                    await window.JobBoardAPI.getCategories();
+
+
+                const categories =
+                    window.JobBoardAPI.normalizeList(
+                        response
+                    );
+
+
+                if (categories.length === 0) {
+
+                    categoriesContainer.innerHTML = `
+
+                        <div class="empty-state">
+
+                            <h3>
+                                No categories yet
+                            </h3>
+
+                            <p>
+                                Categories will appear
+                                when job data is available.
+                            </p>
+
+                        </div>
+
+                    `;
+
+                } else {
+
+                    categoriesContainer.innerHTML =
+                        categories
+                            .slice(0, 8)
+                            .map(function (category) {
+
+                                const name =
+                                    escapeHTML(
+                                        category?.name ||
+                                        category?.category_name ||
+                                        "Category"
+                                    );
+
+
+                                const id =
+                                    category?.id || "";
+
+
+                                return `
+
+                                    <a
+                                        class="category-card"
+                                        href="jobs.html?category=${encodeURIComponent(id)}"
+                                    >
+
+                                        <h3>
+                                            ${name}
+                                        </h3>
+
+                                        <p>
+                                            Explore opportunities →
+                                        </p>
+
+                                    </a>
+
+                                `;
+
+                            })
+                            .join("");
+
                 }
 
-                try {
+            } catch (error) {
 
-                    const response =
-                        await item.request();
+                console.error(
+                    "Home categories error:",
+                    error
+                );
 
-                    const items =
-                        getMainApiList(
-                            response
+
+                showError(
+                    categoriesContainer,
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        if (trendingContainer) {
+
+            showLoading(
+                trendingContainer,
+                "Loading trends..."
+            );
+
+
+            try {
+
+                const response =
+                    await window.JobBoardAPI.getTrending();
+
+
+                const trends =
+                    window.JobBoardAPI.normalizeList(
+                        response
+                    );
+
+
+                const jobIds =
+                    trends
+                        .map(function (item) {
+                            return item?.job_id;
+                        })
+                        .filter(Boolean)
+                        .slice(0, 6);
+
+
+                if (jobIds.length === 0) {
+
+                    trendingContainer.innerHTML = `
+
+                        <div class="empty-state">
+
+                            <h3>
+                                No trending jobs yet
+                            </h3>
+
+                            <p>
+                                Trending opportunities will
+                                appear as live data changes.
+                            </p>
+
+                        </div>
+
+                    `;
+
+                } else {
+
+                    const jobs =
+                        await Promise.all(
+                            jobIds.map(function (id) {
+
+                                return window.JobBoardAPI
+                                    .getJob(id)
+                                    .then(function (response) {
+                                        return response?.data;
+                                    })
+                                    .catch(function () {
+                                        return null;
+                                    });
+
+                            })
                         );
 
-                    renderMainList(
-                        item.selector,
-                        items,
-                        createMainJobCard,
-                        item.empty
+
+                    renderJobGrid(
+                        trendingContainer,
+                        jobs.filter(Boolean)
                     );
 
-                } catch (error) {
-
-                    console.warn(
-                        "Homepage job section unavailable:",
-                        error
-                    );
                 }
+
+            } catch (error) {
+
+                console.error(
+                    "Home trends error:",
+                    error
+                );
+
+
+                showError(
+                    trendingContainer,
+                    error.message
+                );
+
             }
-        )
-    );
-}
 
+        }
 
-/* =========================================================
-   HOMEPAGE CATEGORIES
-   ========================================================= */
-
-async function loadHomepageCategories() {
-
-    if (
-        !window.JobBoardAPI ||
-        !window.JobBoardAPI.categories
-    ) {
-        return;
     }
 
-    const container =
-        getHomepageContainer(
-            [
-                "#jobCategories",
-                "#categoriesContainer",
-                "#categoriesList"
-            ]
-        );
 
-    if (!container) {
-        return;
-    }
+    async function loadStats() {
 
-    try {
-
-        const response =
-            await window.JobBoardAPI.categories.list({
-                sort: "popular",
-                limit: 8
-            });
-
-        const categories =
-            getMainApiList(
-                response
-            );
-
-        renderMainList(
-            [
-                "#jobCategories",
-                "#categoriesContainer",
-                "#categoriesList"
-            ],
-            categories,
-            createMainCategoryCard,
-            "No job categories available yet."
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Homepage categories unavailable:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   HOMEPAGE COMPANIES
-   ========================================================= */
-
-async function loadHomepageCompanies() {
-
-    if (
-        !window.JobBoardAPI ||
-        !window.JobBoardAPI.companies
-    ) {
-        return;
-    }
-
-    const container =
-        getHomepageContainer(
-            [
-                "#featuredCompanies",
-                "#companiesContainer",
-                "#companiesList"
-            ]
-        );
-
-    if (!container) {
-        return;
-    }
-
-    try {
-
-        const response =
-            await window.JobBoardAPI.companies.list({
-                sort: "popular",
-                page: 1,
-                limit: 6
-            });
+        const jobs =
+            document.getElementById("stat-jobs");
 
         const companies =
-            getMainApiList(
-                response
+            document.getElementById("stat-companies");
+
+        const categories =
+            document.getElementById("stat-categories");
+
+
+        if (
+            !jobs &&
+            !companies &&
+            !categories
+        ) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await window.JobBoardAPI.getStats();
+
+
+            if (jobs) {
+                jobs.textContent =
+                    response?.total_jobs ?? "0";
+            }
+
+            if (companies) {
+                companies.textContent =
+                    response?.total_companies ?? "0";
+            }
+
+            if (categories) {
+                categories.textContent =
+                    response?.total_categories ?? "0";
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Statistics error:",
+                error
             );
 
-        renderMainList(
-            [
-                "#featuredCompanies",
-                "#companiesContainer",
-                "#companiesList"
-            ],
-            companies,
-            createMainCompanyCard,
-            "No companies available yet."
-        );
+        }
 
-    } catch (error) {
-
-        console.warn(
-            "Homepage companies unavailable:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   HOMEPAGE INITIALIZATION
-   ========================================================= */
-
-async function initializeHomepageData() {
-
-    if (!isHomepage()) {
-        return;
     }
 
-    if (!window.JobBoardAPI) {
 
-        console.warn(
-            "JobBoard API is not loaded."
-        );
+    function setupHomeSearch() {
 
-        return;
-    }
-
-    await Promise.allSettled([
-        loadHomepageStats(),
-        loadHomepageJobs(),
-        loadHomepageCategories(),
-        loadHomepageCompanies()
-    ]);
-}
+        const form =
+            document.getElementById(
+                "home-search-form"
+            );
 
 
-/* =========================================================
-   SMOOTH INTERNAL LINKS
-   ========================================================= */
+        if (!form) {
+            return;
+        }
 
-function initializeSmoothLinks() {
 
-    $$('a[href^="#"]').forEach(
-        (link) => {
+        form.addEventListener(
+            "submit",
+            function (event) {
 
-            link.addEventListener(
-                "click",
-                (event) => {
+                event.preventDefault();
 
-                    const targetId =
-                        link.getAttribute("href");
 
-                    if (
-                        !targetId ||
-                        targetId === "#"
-                    ) {
-                        return;
-                    }
+                const keyword =
+                    document.getElementById(
+                        "home-keyword"
+                    )?.value.trim() || "";
 
-                    const target =
-                        $(targetId);
 
-                    if (!target) {
-                        return;
-                    }
+                const location =
+                    document.getElementById(
+                        "home-location"
+                    )?.value.trim() || "";
 
-                    event.preventDefault();
 
-                    target.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
+                const params =
+                    new URLSearchParams();
+
+
+                if (keyword) {
+                    params.set(
+                        "keyword",
+                        keyword
+                    );
                 }
-            );
-        }
-    );
-}
 
 
-/* =========================================================
-   EXTERNAL LINKS
-   ========================================================= */
-
-function initializeExternalLinks() {
-
-    $$('a[href^="http://"], a[href^="https://"]').forEach(
-        (link) => {
-
-            link.setAttribute(
-                "target",
-                "_blank"
-            );
-
-            link.setAttribute(
-                "rel",
-                "noopener noreferrer"
-            );
-        }
-    );
-}
+                if (location) {
+                    params.set(
+                        "location",
+                        location
+                    );
+                }
 
 
-/* =========================================================
-   ACCESSIBILITY
-   ========================================================= */
+                window.location.href =
+                    `search.html?${params.toString()}`;
 
-function initializeAccessibility() {
-
-    $$("button").forEach(
-        (button) => {
-
-            if (
-                !button.getAttribute("type") &&
-                button.type !== "submit"
-            ) {
-                button.setAttribute(
-                    "type",
-                    "button"
-                );
             }
-        }
-    );
+        );
 
-    $$("img").forEach(
-        (image) => {
+    }
 
-            if (
-                !image.getAttribute("alt")
-            ) {
-                image.setAttribute(
-                    "alt",
-                    ""
-                );
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   GLOBAL ERROR NOTICE
-   ========================================================= */
-
-function initializeGlobalErrorHandler() {
-
-    window.addEventListener(
-        "error",
-        (event) => {
-
-            if (
-                event.message &&
-                !event.message.includes(
-                    "ResizeObserver"
-                )
-            ) {
-                console.warn(
-                    "JobBoard frontend error:",
-                    event.message
-                );
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   MAIN INITIALIZATION
-   ========================================================= */
-
-function initializeMain() {
-
-    initializeMobileNavigation();
-
-    initializeActiveNavigation();
-
-    initializeGlobalSearchForms();
-
-    initializePopularSearches();
-
-    initializeHeaderSearchButton();
-
-    initializeBookmarkButtons();
-
-    initializeCurrentYear();
-
-    initializeSmoothLinks();
-
-    initializeExternalLinks();
-
-    initializeAccessibility();
-
-    initializeGlobalErrorHandler();
-
-    initializeHomepageData();
-}
-
-
-/* =========================================================
-   START
-   ========================================================= */
-
-if (document.readyState === "loading") {
 
     document.addEventListener(
         "DOMContentLoaded",
-        initializeMain
+        function () {
+
+            createHeader();
+
+            createFooter();
+
+            setupHomeSearch();
+
+            loadStats();
+
+            loadHome();
+
+        }
     );
 
-} else {
 
-    initializeMain();
-}
+    window.JobBoardUI = {
+
+        escapeHTML,
+
+        renderJobCard,
+
+        renderJobGrid,
+
+        showLoading,
+
+        showError
+
+    };
+
+})();

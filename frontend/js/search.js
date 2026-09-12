@@ -1,161 +1,247 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("search-form");
-    const keywordInput = document.getElementById("keyword");
-    const locationInput = document.getElementById("location");
-    const resultsContainer = document.getElementById("job-results");
-    const resultsCount = document.getElementById("results-count");
-    const resultsTitle = document.getElementById("results-title");
-    const status = document.getElementById("search-status");
+﻿/*
+=========================================================
+JOBBOARD SEARCH PAGE
+=========================================================
+*/
 
-    if (!form || !resultsContainer) {
-        return;
-    }
+(function () {
 
-    function escapeHtml(value) {
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+    "use strict";
 
-    function renderJobs(jobs) {
-        if (!jobs.length) {
-            resultsContainer.innerHTML = `
-                <div class="empty-state">
-                    <h3>No jobs found</h3>
-                    <p>Try another keyword or location.</p>
-                </div>
-            `;
+
+    async function performSearch() {
+
+        const container =
+            document.getElementById(
+                "jobResults"
+            );
+
+
+        const count =
+            document.getElementById(
+                "search-count"
+            );
+
+
+        if (!container) {
             return;
         }
 
-        resultsContainer.innerHTML = jobs.map(job => `
-            <article class="job-card">
 
-                <div class="job-card-header">
-                    ${
-                        job.company_logo
-                            ? `<img
-                                src="${escapeHtml(job.company_logo)}"
-                                alt="${escapeHtml(job.company_name || "Company")}"
-                                class="company-logo"
-                              >`
-                            : ""
-                    }
+        const keyword =
+            document.getElementById(
+                "keyword"
+            )?.value.trim() || "";
 
-                    <div>
-                        <h3>
-                            ${escapeHtml(job.title || "Untitled Job")}
-                        </h3>
 
-                        <p class="company-name">
-                            ${escapeHtml(job.company_name || "Company")}
-                        </p>
-                    </div>
-                </div>
+        const location =
+            document.getElementById(
+                "location"
+            )?.value.trim() || "";
 
-                <div class="job-meta">
-                    ${
-                        job.location
-                            ? `<span>${escapeHtml(job.location)}</span>`
-                            : ""
-                    }
 
-                    ${
-                        job.job_type
-                            ? `<span>${escapeHtml(job.job_type)}</span>`
-                            : ""
-                    }
+        if (!keyword && !location) {
 
-                    ${
-                        job.work_mode
-                            ? `<span>${escapeHtml(job.work_mode)}</span>`
-                            : ""
-                    }
-                </div>
+            container.innerHTML = `
 
-                <a
-                    href="job-details.html?id=${encodeURIComponent(job.id)}"
-                    class="btn btn-secondary"
-                >
-                    View Job
-                </a>
+                <div class="empty-state">
 
-            </article>
-        `).join("");
-    }
+                    <h3>
+                        Search for a job
+                    </h3>
 
-    async function performSearch() {
-        const keyword = keywordInput.value.trim();
-        const location = locationInput.value.trim();
-
-        status.innerHTML = "<p>Searching live jobs...</p>";
-        resultsContainer.innerHTML = "";
-
-        try {
-            const response = await JobBoardAPI.searchJobs({
-                keyword,
-                location,
-                page: 1,
-                limit: 50
-            });
-
-            const jobs = response.data || [];
-
-            resultsTitle.textContent =
-                keyword || location
-                    ? "Search Results"
-                    : "Latest Jobs";
-
-            resultsCount.textContent =
-                `${response.total || jobs.length} jobs`;
-
-            renderJobs(jobs);
-
-            status.innerHTML = "";
-
-        } catch (error) {
-            console.error(error);
-
-            resultsCount.textContent = "";
-
-            status.innerHTML = `
-                <div class="error-state">
-                    <h3>Unable to load jobs</h3>
                     <p>
-                        Make sure the JobBoard API is running.
+                        Enter a keyword or location
+                        to find opportunities.
                     </p>
+
                 </div>
+
             `;
 
-            resultsContainer.innerHTML = "";
+            if (count) {
+                count.textContent = "";
+            }
+
+            return;
         }
+
+
+        window.JobBoardUI.showLoading(
+            container,
+            "Searching live jobs..."
+        );
+
+
+        try {
+
+            const response =
+                await window.JobBoardAPI.searchJobs({
+
+                    keyword,
+
+                    location,
+
+                    page: 1,
+
+                    limit: 20
+
+                });
+
+
+            const jobs =
+                window.JobBoardAPI.normalizeList(
+                    response
+                );
+
+
+            const total =
+                Number(
+                    response?.total ?? jobs.length
+                );
+
+
+            if (count) {
+
+                count.textContent =
+                    `${total} result${
+                        total === 1
+                        ? ""
+                        : "s"
+                    }`;
+
+            }
+
+
+            window.JobBoardUI.renderJobGrid(
+                container,
+                jobs
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Search error:",
+                error
+            );
+
+
+            window.JobBoardUI.showError(
+                container,
+                error.message ||
+                "Search failed."
+            );
+
+        }
+
     }
 
-    form.addEventListener(
-        "submit",
-        event => {
-            event.preventDefault();
-            performSearch();
+
+    function loadSearchFromURL() {
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const keyword =
+            params.get("keyword");
+
+
+        const location =
+            params.get("location");
+
+
+        if (keyword !== null) {
+
+            const input =
+                document.getElementById(
+                    "keyword"
+                );
+
+            if (input) {
+                input.value = keyword;
+            }
+
+        }
+
+
+        if (location !== null) {
+
+            const input =
+                document.getElementById(
+                    "location"
+                );
+
+            if (input) {
+                input.value = location;
+            }
+
+        }
+
+    }
+
+
+    function setupSearchForm() {
+
+        const form =
+            document.getElementById(
+                "search-form"
+            );
+
+
+        if (!form) {
+            return;
+        }
+
+
+        form.addEventListener(
+            "submit",
+            function (event) {
+
+                event.preventDefault();
+
+                performSearch();
+
+            }
+        );
+
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            loadSearchFromURL();
+
+            setupSearchForm();
+
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+
+            if (
+                params.get("keyword") ||
+                params.get("location")
+            ) {
+
+                performSearch();
+
+            }
+
         }
     );
 
-    const params = new URLSearchParams(
-        window.location.search
-    );
 
-    const initialKeyword = params.get("keyword");
-    const initialLocation = params.get("location");
+    window.JobBoardSearch = {
 
-    if (initialKeyword) {
-        keywordInput.value = initialKeyword;
-    }
+        performSearch
 
-    if (initialLocation) {
-        locationInput.value = initialLocation;
-    }
+    };
 
-    performSearch();
-});
+})();

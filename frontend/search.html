@@ -1,84 +1,129 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Search Jobs | JobBoard</title>
 
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
+
 </head>
 
 <body>
 
     <header id="site-header"></header>
 
+
     <main class="page-container">
 
         <section class="page-header">
-            <div>
-                <h1>Search Jobs</h1>
-                <p>Find opportunities from our live job sources.</p>
+
+            <div class="container">
+
+                <span class="eyebrow">
+                    SEARCH
+                </span>
+
+                <h1>
+                    Search jobs
+                </h1>
+
+                <p>
+                    Search live job opportunities by keyword and location.
+                </p>
+
             </div>
+
         </section>
 
-        <section class="search-section">
-            <form id="search-form">
 
-                <div class="search-grid">
+        <section class="section">
 
-                    <div class="form-group">
-                        <label for="keyword">Job title or keyword</label>
+            <div class="container">
+
+                <form
+                    id="search-form"
+                    class="hero-search"
+                >
+
+                    <div class="search-field">
+
+                        <label for="keyword">
+                            Keyword
+                        </label>
+
                         <input
-                            type="text"
                             id="keyword"
                             name="keyword"
-                            placeholder="e.g. Python Developer"
+                            type="text"
+                            placeholder="Job title, skill or keyword"
                         >
+
                     </div>
 
-                    <div class="form-group">
-                        <label for="location">Location</label>
+
+                    <div class="search-field">
+
+                        <label for="location">
+                            Location
+                        </label>
+
                         <input
-                            type="text"
                             id="location"
                             name="location"
-                            placeholder="e.g. India"
+                            type="text"
+                            placeholder="Location"
                         >
+
                     </div>
 
-                    <button type="submit" class="btn btn-primary">
-                        Search Jobs
+
+                    <button
+                        type="submit"
+                        class="button button-primary"
+                    >
+                        Search
                     </button>
+
+                </form>
+
+
+                <div class="section-header">
+
+                    <h2>
+                        Search results
+                    </h2>
+
+                    <span id="search-count"></span>
 
                 </div>
 
-            </form>
-        </section>
 
-        <section class="jobs-section">
+                <div
+                    id="jobResults"
+                    class="jobs-grid"
+                ></div>
 
-            <div class="section-header">
-                <h2 id="results-title">Jobs</h2>
-                <span id="results-count"></span>
             </div>
-
-            <div id="search-status"></div>
-
-            <div
-                id="job-results"
-                class="job-grid"
-            ></div>
 
         </section>
 
     </main>
 
+
     <footer id="site-footer"></footer>
 
-    <script src="js/main.js"></script>
+
     <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
     <script src="js/search.js"></script>
 
 </body>
