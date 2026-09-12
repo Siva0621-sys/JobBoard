@@ -1,0 +1,819 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="JobBoard - Discover the latest jobs, internships, remote opportunities, companies and career opportunities."
+    >
+
+    <meta
+        name="keywords"
+        content="jobs, careers, internships, remote jobs, job search, employment, JobBoard"
+    >
+
+    <meta name="author" content="JobBoard">
+
+    <title>JobBoard | Find Your Next Opportunity</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+
+<body>
+
+    <!-- ==========================================
+         HEADER
+    =========================================== -->
+
+    <header class="site-header">
+
+        <div class="container header-inner">
+
+            <a href="index.html" class="brand" aria-label="JobBoard Home">
+                <span class="brand-mark">J</span>
+                <span class="brand-name">JobBoard</span>
+            </a>
+
+            <nav class="main-navigation" aria-label="Main navigation">
+
+                <a href="index.html" class="nav-link active">
+                    Home
+                </a>
+
+                <a href="jobs.html" class="nav-link">
+                    Jobs
+                </a>
+
+                <a href="companies.html" class="nav-link">
+                    Companies
+                </a>
+
+                <a href="categories.html" class="nav-link">
+                    Categories
+                </a>
+
+                <a href="about.html" class="nav-link">
+                    About
+                </a>
+
+            </nav>
+
+            <div class="header-actions">
+
+                <a href="jobs.html" class="header-search-button">
+                    Search Jobs
+                </a>
+
+                <button
+                    class="mobile-menu-button"
+                    id="mobileMenuButton"
+                    type="button"
+                    aria-label="Open navigation menu"
+                    aria-expanded="false"
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- ==========================================
+         MAIN CONTENT
+    =========================================== -->
+
+    <main>
+
+        <!-- ======================================
+             HERO SECTION
+        ======================================= -->
+
+        <section class="hero-section">
+
+            <div class="container hero-container">
+
+                <div class="hero-content">
+
+                    <div class="hero-badge">
+                        <span class="status-dot"></span>
+                        Fresh opportunities updated regularly
+                    </div>
+
+                    <h1>
+                        Find work that
+                        <span>fits your future.</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        Discover jobs, internships and remote opportunities
+                        from companies across different industries.
+                    </p>
+
+                    <!-- Search -->
+
+                    <form class="hero-search" id="heroSearchForm">
+
+                        <div class="search-field">
+
+                            <span class="search-icon" aria-hidden="true">
+                                ⌕
+                            </span>
+
+                            <input
+                                type="text"
+                                id="heroJobSearch"
+                                name="job"
+                                placeholder="Job title, skill or keyword"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <div class="search-field location-field">
+
+                            <span class="location-icon" aria-hidden="true">
+                                ◉
+                            </span>
+
+                            <input
+                                type="text"
+                                id="heroLocationSearch"
+                                name="location"
+                                placeholder="City, state or remote"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="primary-button hero-search-button"
+                        >
+                            Search Jobs
+                        </button>
+
+                    </form>
+
+                    <!-- Popular searches -->
+
+                    <div class="popular-searches">
+
+                        <span>Popular:</span>
+
+                        <a href="jobs.html?search=software">
+                            Software
+                        </a>
+
+                        <a href="jobs.html?search=python">
+                            Python
+                        </a>
+
+                        <a href="jobs.html?search=data">
+                            Data
+                        </a>
+
+                        <a href="jobs.html?search=ai">
+                            AI & ML
+                        </a>
+
+                        <a href="jobs.html?search=design">
+                            Design
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             QUICK STATS
+        ======================================= -->
+
+        <section class="stats-section">
+
+            <div class="container stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-value" id="totalJobs">
+                        —
+                    </div>
+
+                    <div class="stat-label">
+                        Jobs available
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-value" id="totalCompanies">
+                        —
+                    </div>
+
+                    <div class="stat-label">
+                        Companies
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-value" id="totalCategories">
+                        —
+                    </div>
+
+                    <div class="stat-label">
+                        Job categories
+                    </div>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <div class="stat-value" id="remoteJobs">
+                        —
+                    </div>
+
+                    <div class="stat-label">
+                        Remote opportunities
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             TRENDING JOBS
+        ======================================= -->
+
+        <section class="content-section trending-section">
+
+            <div class="container">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            CURRENT MARKET
+                        </span>
+
+                        <h2>
+                            Trending opportunities
+                        </h2>
+
+                        <p>
+                            Roles receiving strong activity across the
+                            current job market.
+                        </p>
+
+                    </div>
+
+                    <a href="jobs.html?sort=trending" class="section-link">
+                        View all
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+                <div
+                    class="jobs-grid"
+                    id="trendingJobs"
+                >
+
+                    <!-- Dynamic jobs will be inserted here -->
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             LATEST JOBS
+        ======================================= -->
+
+        <section class="content-section latest-section">
+
+            <div class="container">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            JUST ADDED
+                        </span>
+
+                        <h2>
+                            Latest jobs
+                        </h2>
+
+                        <p>
+                            Recently published opportunities from
+                            supported job sources.
+                        </p>
+
+                    </div>
+
+                    <a href="jobs.html?sort=latest" class="section-link">
+                        Explore jobs
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+                <div
+                    class="jobs-list"
+                    id="latestJobs"
+                >
+
+                    <!-- Dynamic jobs will be inserted here -->
+
+                    <div class="loading-list-item"></div>
+                    <div class="loading-list-item"></div>
+                    <div class="loading-list-item"></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             REMOTE JOBS
+        ======================================= -->
+
+        <section class="content-section remote-section">
+
+            <div class="container">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            WORK FROM ANYWHERE
+                        </span>
+
+                        <h2>
+                            Remote opportunities
+                        </h2>
+
+                        <p>
+                            Explore roles that offer remote or flexible
+                            working arrangements.
+                        </p>
+
+                    </div>
+
+                    <a href="jobs.html?work_mode=remote" class="section-link">
+                        View remote jobs
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+                <div
+                    class="jobs-grid"
+                    id="remoteJobsList"
+                >
+
+                    <!-- Dynamic jobs will be inserted here -->
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             INTERNSHIPS
+        ======================================= -->
+
+        <section class="content-section internship-section">
+
+            <div class="container">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            START YOUR CAREER
+                        </span>
+
+                        <h2>
+                            Internships
+                        </h2>
+
+                        <p>
+                            Find opportunities designed for students
+                            and early-career professionals.
+                        </p>
+
+                    </div>
+
+                    <a href="jobs.html?job_type=internship" class="section-link">
+                        View internships
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+                <div
+                    class="jobs-grid"
+                    id="internshipJobs"
+                >
+
+                    <!-- Dynamic internships will be inserted here -->
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                    <div class="loading-card">
+                        <div class="loading-line"></div>
+                        <div class="loading-line short"></div>
+                        <div class="loading-line"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             CATEGORIES
+        ======================================= -->
+
+        <section class="content-section categories-section">
+
+            <div class="container">
+
+                <div class="section-heading centered-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            EXPLORE CAREERS
+                        </span>
+
+                        <h2>
+                            Find opportunities by category
+                        </h2>
+
+                        <p>
+                            Explore jobs across technology, business,
+                            healthcare, engineering and more.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div
+                    class="categories-grid"
+                    id="jobCategories"
+                >
+
+                    <!-- Dynamic categories will be inserted here -->
+
+                    <a href="jobs.html?category=Software%20%26%20IT" class="category-card">
+                        <span class="category-icon">⌘</span>
+                        <span class="category-name">Software & IT</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                    <a href="jobs.html?category=AI%20%26%20Machine%20Learning" class="category-card">
+                        <span class="category-icon">✦</span>
+                        <span class="category-name">AI & Machine Learning</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                    <a href="jobs.html?category=Data%20%26%20Analytics" class="category-card">
+                        <span class="category-icon">◫</span>
+                        <span class="category-name">Data & Analytics</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                    <a href="jobs.html?category=Design" class="category-card">
+                        <span class="category-icon">◇</span>
+                        <span class="category-name">Design</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                    <a href="jobs.html?category=Marketing%20%26%20Sales" class="category-card">
+                        <span class="category-icon">↗</span>
+                        <span class="category-name">Marketing & Sales</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                    <a href="jobs.html?category=Finance%20%26%20Accounting" class="category-card">
+                        <span class="category-icon">₹</span>
+                        <span class="category-name">Finance & Accounting</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                    <a href="jobs.html?category=Healthcare" class="category-card">
+                        <span class="category-icon">+</span>
+                        <span class="category-name">Healthcare</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                    <a href="jobs.html?category=Engineering" class="category-card">
+                        <span class="category-icon">⚙</span>
+                        <span class="category-name">Engineering</span>
+                        <span class="category-arrow">→</span>
+                    </a>
+
+                </div>
+
+                <div class="categories-action">
+
+                    <a href="categories.html" class="secondary-button">
+                        Explore all categories
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             COMPANIES
+        ======================================= -->
+
+        <section class="content-section companies-section">
+
+            <div class="container">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            EMPLOYERS
+                        </span>
+
+                        <h2>
+                            Companies hiring
+                        </h2>
+
+                        <p>
+                            Discover companies with open opportunities.
+                        </p>
+
+                    </div>
+
+                    <a href="companies.html" class="section-link">
+                        Browse companies
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+                <div
+                    class="companies-grid"
+                    id="featuredCompanies"
+                >
+
+                    <!-- Dynamic companies will be inserted here -->
+
+                    <div class="company-placeholder"></div>
+                    <div class="company-placeholder"></div>
+                    <div class="company-placeholder"></div>
+                    <div class="company-placeholder"></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             CALL TO ACTION
+        ======================================= -->
+
+        <section class="cta-section">
+
+            <div class="container">
+
+                <div class="cta-card">
+
+                    <div class="cta-content">
+
+                        <span class="section-label">
+                            KEEP EXPLORING
+                        </span>
+
+                        <h2>
+                            Your next opportunity
+                            could be one search away.
+                        </h2>
+
+                        <p>
+                            Search thousands of opportunities across
+                            different industries and work arrangements.
+                        </p>
+
+                    </div>
+
+                    <a href="jobs.html" class="primary-button">
+                        Browse all jobs
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ==========================================
+         FOOTER
+    =========================================== -->
+
+    <footer class="site-footer">
+
+        <div class="container">
+
+            <div class="footer-main">
+
+                <div class="footer-brand">
+
+                    <a href="index.html" class="brand">
+                        <span class="brand-mark">J</span>
+                        <span class="brand-name">JobBoard</span>
+                    </a>
+
+                    <p>
+                        A simple, open-source platform for discovering
+                        jobs and career opportunities.
+                    </p>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h3>Explore</h3>
+
+                    <a href="jobs.html">
+                        Jobs
+                    </a>
+
+                    <a href="companies.html">
+                        Companies
+                    </a>
+
+                    <a href="categories.html">
+                        Categories
+                    </a>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h3>Discover</h3>
+
+                    <a href="jobs.html?sort=trending">
+                        Trending jobs
+                    </a>
+
+                    <a href="jobs.html?work_mode=remote">
+                        Remote jobs
+                    </a>
+
+                    <a href="jobs.html?job_type=internship">
+                        Internships
+                    </a>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h3>JobBoard</h3>
+
+                    <a href="about.html">
+                        About
+                    </a>
+
+                    <a href="about.html#open-source">
+                        Open source
+                    </a>
+
+                    <a href="about.html#contribute">
+                        Contribute
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <div class="footer-bottom">
+
+                <p>
+                    © <span id="currentYear"></span> JobBoard.
+                    Built for open-source job discovery.
+                </p>
+
+                <p>
+                    Job listings belong to their respective sources.
+                </p>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
+
+    <script src="js/main.js"></script>
+
+</body>
+</html>

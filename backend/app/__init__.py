@@ -1,0 +1,3 @@
+﻿"""
+JobBoard backend application package.
+"""
